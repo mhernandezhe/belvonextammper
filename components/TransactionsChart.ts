@@ -1,13 +1,13 @@
 // components/TransactionsChart.tsx
 import { useEffect, useRef, useState } from 'react';
 import Highcharts from 'highcharts';
-import { fetchTransactions } from '../lib/fetchTransactions'; // Ajusta la ruta según corresponda
+import { fetchTransactions } from '../utils/fetchTransactions'; // Ajusta la ruta según corresponda
 
 const TransactionsChart: React.FC = () => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -15,7 +15,7 @@ const TransactionsChart: React.FC = () => {
         const formattedData = transactions.map((transaction: any) => ({
           x: new Date(transaction.date).getTime(),
           y: transaction.amount,
-          category: transaction.category // Asegúrate de que 'category' esté en los datos
+          category: transaction.category, // Asegúrate de que 'category' esté en los datos
         }));
         setData(formattedData);
         setCategories([...new Set(transactions.map((t: any) => t.category))]);
@@ -31,21 +31,21 @@ const TransactionsChart: React.FC = () => {
     if (chartRef.current) {
       Highcharts.chart(chartRef.current, {
         chart: {
-          type: 'scatter'
+          type: 'scatter',
         },
         title: {
-          text: 'Transactions Overview'
+          text: 'Resumen de transacciones',
         },
         xAxis: {
           type: 'datetime',
           title: {
-            text: 'Date'
-          }
+            text: 'Fecha',
+          },
         },
         yAxis: {
           title: {
-            text: 'Amount'
-          }
+            text: 'Cantidad',
+          },
         },
         series: categories.map(category => ({
           name: category,
@@ -55,16 +55,16 @@ const TransactionsChart: React.FC = () => {
               x: d.x,
               y: d.y,
               marker: {
-                symbol: 'circle'
-              }
-            }))
-        }))
+                symbol: 'circle',
+              },
+            })),
+        })),
       });
     }
   }, [data, categories]);
 
   return (
-    <div ref=chartRef style={{ width: '100%', height: '400px' }}></div>
+    <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>
   );
 };
 
