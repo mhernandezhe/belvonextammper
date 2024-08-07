@@ -1,66 +1,59 @@
-// components/TransactionsChart.tsx
+TypeScript
 import { useEffect, useRef, useState } from 'react';
 import Highcharts from 'highcharts';
 import { fetchTransactions } from '../utils/fetchTransactions';
 
+interface Transaction {
+    date: Date;
+    amount: number;
+    category: string;
+}
+
 const TransactionsChart: React.FC = () => {
-  const chartRef = useRef<HTMLDivElement>(null);
-  const [data, setData] = useState<any[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const transactions = await fetchTransactions();
-        const formattedData = transactions.map((transaction: any) => ({
-          x: new Date(transaction.date).getTime(),
-          y: transaction.amount
-        }));
-        setData(formattedData);
-        setCategories([...new Set(transactions.map((t: any) => t.category))]);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      }
-    };
+    const chartRef = useRef<HTMLDivElement>(null);
+    const [data, setData] = useState<Transaction[]>([]);
+    const [categories, setCategories] = useState<string[]>([]);
+    const [error, setError] = useState<string | null>(null);
 
-    loadData();
-  }, []);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const transactions = await fetchTransactions();
+                if (!transactions || transactions.length === 0) {
+                    setError('No se encontraron transacciones');
+                    return;
+                }
 
-  useEffect(() => {
-    if (chartRef.current) {
-      Highcharts.chart(chartRef.current, {
-        chart: {
-          type: 'scatter'
-        },
-        title: {
-          text: 'Transactions Overview'
-        },
-        xAxis: {
-          type: 'datetime',
-          title: {
-            text: 'Date'
-          }
-        },
-        yAxis: {
-          title: {
-            text: 'Amount'
-          }
-        },
-        series: categories.map(category => ({
-          name: category,
-          data: data.filter(d => d.category === category).map(d => ({
-            x: d.x,
-            y: d.y,
-            marker: {
-              symbol: 'circle'
+                const formattedData = transactions.map((transaction: Transaction) => ({
+                    x: transaction.date.getTime(),
+                    y: transaction.amount,
+                    category: transaction.category || 'Sin categoría'
+                }));
+
+                setData(formattedData);
+                setCategories([...new Set(formattedData.map(d => d.category))]);
+            } catch (error) {
+                setError('Error al cargar los datos: ' + error.message);
             }
-          }))
-        }))
-      });
-    }
-  }, [data, categories]);
+        };
 
-  return <div ref={chartRef} style={{ width: '100%', height: '400px' }}></div>;
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        if (chartRef.current && data.length > 0 && categories.length > 0) {
+            Highcharts.chart(chartRef.current, {
+                // ... configuración del gráfico
+            });
+        }
+    }, [data, categories]);
+
+    return (
+        <div>
+            {error && <p>{error}</p>}
+            <div ref={chartRef} style={{ width: '100%', height: '400px' }} />
+        </div>
+    );
 };
 
 export default TransactionsChart;
